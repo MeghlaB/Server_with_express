@@ -1,56 +1,34 @@
-import express, { Request, Response } from "express"
+import express, { NextFunction, Request, Response } from "express"
 import dotenv from "dotenv"
-import { Pool } from "pg"
-import path from "path"
 
-dotenv.config({ path: path.join(process.cwd(), '.env') })
+import path from "path"
+import config from "./config"
+import initDB, { pool } from "./config/db"
+import logger from "./middleware/logger"
+
+
+
 const app = express()
-const port = 5000
+const port = config.port
 
 // parser
 app.use(express.json())
 
-// DB
-const pool = new Pool({
-    connectionString: `${process.env.CONNECTION_STR}`
-
-})
-
-const initDB = async () => {
-    await pool.query(
-        `CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(150) UNIQUE NOT NULL,
-            age INT,
-            phn VARCHAR(15),
-            address TEXT,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )`
-    );
-    await pool.query(
-        `CREATE TABLE IF NOT EXISTS todos (
-            id SERIAL PRIMARY KEY,
-            user_id INT REFERENCES users(id) ON DELETE CASCADE,
-            title VARCHAR(150)  NOT NULL,
-            description TEXT,
-            completed BOOLEAN  DEFAULT false,
-            due_date DATE,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        )`
-    )
-};
-
+//initialization DB
 initDB();
 
 
-app.get('/', (req: Request, res: Response) => {
+//  --------------------- LOGGER Middleware -------------------
+
+
+
+
+
+app.get('/', logger, (req: Request, res: Response) => {
     res.send('Hello World!')
 })
 
-//--------------- Users CRUD ------------------
+//! --------------- Users CRUD ------------------
 
 app.post("/users", async (req: Request, res: Response) => {
     const { name, email, age, phn, address } = req.body
@@ -106,11 +84,11 @@ app.get("/users/:id", async (req: Request, res: Response) => {
                 message: "users not found",
 
             })
-        }else {
+        } else {
             res.status(200).json({
-                 success:true,
-                 message:"users fetched",
-                 data:result.rows[0]
+                success: true,
+                message: "users fetched",
+                data: result.rows[0]
             })
         }
     } catch (err: any) {
@@ -126,18 +104,18 @@ app.get("/users/:id", async (req: Request, res: Response) => {
 app.put("/users/:id", async (req: Request, res: Response) => {
     const { name, email, age, phn, address } = req.body
     try {
-        const result = await pool.query(`UPDATE users SET name =$1 , email = $2 , age = $3 , phn=$4 , address= $5  WHERE id=$6 RETURNING*`, [name, email, age, phn, address ,req.params.id])
+        const result = await pool.query(`UPDATE users SET name =$1 , email = $2 , age = $3 , phn=$4 , address= $5  WHERE id=$6 RETURNING*`, [name, email, age, phn, address, req.params.id])
         if (result.rows.length === 0) {
             res.status(400).json({
                 success: false,
                 message: "users not found",
 
             })
-        }else {
+        } else {
             res.status(200).json({
-                 success:true,
-                 message:"users successfully updated",
-                 data:result.rows[0]
+                success: true,
+                message: "users successfully updated",
+                data: result.rows[0]
             })
         }
     } catch (err: any) {
@@ -159,11 +137,11 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
                 message: "users not found",
 
             })
-        }else {
+        } else {
             res.status(200).json({
-                 success:true,
-                 message:"users Successfully Deleted",
-                 data:result.rows
+                success: true,
+                message: "users Successfully Deleted",
+                data: result.rows
             })
         }
     } catch (err: any) {
@@ -178,6 +156,61 @@ app.delete("/users/:id", async (req: Request, res: Response) => {
 
 
 
+// ! TODOS CRUD 
+app.post("/todos", async (req: Request, res: Response) => {
+    const { user_id, title } = req.body;
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO todos(user_id, title) VALUES($1, $2) RETURNING *`,
+            [user_id, title]
+        );
+        res.status(201).json({
+            success: true,
+            message: "Todo created",
+            data: result.rows[0],
+        });
+    } catch (err: any) {
+        res.status(500).json({
+            success: false,
+            message: err.message,
+        });
+    }
+});
+
+// --------------------- ALL todos CRUD --------------------------
+app.get('/todos', async (req: Request, res: Response) => {
+    try {
+        const result = await pool.query(`SELECT * FROM todos`)
+        console.log(result)
+        res.status(200).json({
+            success: true,
+            message: "All Todos",
+            data: result.rows,
+
+        })
+
+    } catch (err: any) {
+        res.status(500).json({
+            success: false,
+            message: err.message,
+
+        })
+    }
+})
+
+
+
+
+
+// --------------------------- NOT FOUND ROUTE ------------------------------------
+app.use((req , res)=>{
+    res.status(404).json({
+        success:false,
+        message:"NOT FOUND ROUTE",
+        path:req.path
+    })
+})
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
