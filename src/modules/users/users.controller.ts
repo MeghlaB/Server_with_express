@@ -3,9 +3,9 @@ import { pool } from "../../config/db"
 import { userServices } from "./user.services"
 
 const createUser = async (req: Request, res: Response) => {
-    const { name, email, age, phn, address } = req.body
+    // const { name, email, age, phn, address } = req.body
     try {
-        const result =  await userServices.createUser(name, email, age, phn, address )
+        const result =  await userServices.createUser(req.body )
         res.status(201).json({
             success: true,
             message: "data inserted successfully",
@@ -26,7 +26,7 @@ const createUser = async (req: Request, res: Response) => {
 const getUser = async (req: Request, res: Response) => {
     try {
         const result = await userServices.getUser()
-        console.log(result)
+        // console.log(result)
         res.status(200).json({
             success: true,
             message: "All users",

@@ -7,6 +7,7 @@ import initDB, { pool } from "./config/db"
 import logger from "./middleware/logger"
 import { UserRoutes } from "./modules/users/users.routes"
 import { todoRoutes } from "./modules/todos/todo.routes"
+import { authRoutes } from "./modules/auth/auth.routes"
 
 
 
@@ -36,6 +37,17 @@ app.use("/users",UserRoutes)
 
 // ! ----------------- TODOS CRUD -----------------
 app.use("/todos", todoRoutes);
+
+// ! --------------- AUTH ----------------
+app.use("/auth/v1",authRoutes)
+
+
+
+
+
+
+
+
 
 // ---------------- All users CRUD --------------------------
 

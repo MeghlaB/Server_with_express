@@ -47,7 +47,7 @@ const getSingleTodo = async (req: Request, res: Response) => {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     res.status(500).json({ error: "Failed to fetch todo" });
   }
 };
@@ -62,7 +62,7 @@ const updateTodo = async (req: Request, res: Response) => {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     res.status(500).json({ error: "Failed to update todo" });
   }
 };
@@ -77,7 +77,7 @@ const deleteTodo = async (req: Request, res: Response) => {
 
     res.json({ success: true, message: "Todo deleted", data: null });
   } catch (err) {
-    console.log(err);
+    // console.log(err);
     res.status(500).json({ error: "Failed to delete todo" });
   }
 };
